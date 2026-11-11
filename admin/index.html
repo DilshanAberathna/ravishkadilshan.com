@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script src="../theme.js?v=theme-label-fix"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RD. | Portfolio Admin</title>
+  <link rel="stylesheet" href="../style.css?v=preloader-2">
+  <link rel="stylesheet" href="admin.css?v=github-field">
+  <script src="admin.js?v=restructure-2" defer></script>
+</head>
+<body>
+  <div class="workspace">
+    <aside>
+      <a class="logo" href="./" aria-label="Admin home">RD<span>.</span></a>
+      <p class="eyebrow">PORTFOLIO STUDIO</p>
+      <nav class="admin-nav" aria-label="Content sections">
+        <a href="#profile">Profile</a>
+        <a href="#projects">Projects</a>
+        <a href="#blogs">Blogs</a>
+        <a href="#writeups">Writeups</a>
+        <a href="#achievements">Achievements</a>
+        <a href="#career">Work</a>
+        <a href="#background">Education</a>
+        <a href="#toolkit">Skills</a>
+        <a href="#github">GitHub</a>
+        <a href="#contact">Contact</a>
+        <a href="#sections">+ Add section</a>
+      </nav>
+      <a class="portfolio-link" href="../">View portfolio ↗</a>
+    </aside>
+    <main>
+      <header class="admin-top"><span class="eyebrow">CONTENT WORKSPACE</span><div class="admin-top-actions"><span class="badge">LOCAL ADMIN</span><button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button></div></header>
+      <div class="admin-heading">
+        <p class="eyebrow">PORTFOLIO / ADMIN</p>
+        <h1>Manage content<span>.</span></h1>
+        <p>Save drafts in this browser, then publish entries to your portfolio.</p>
+      </div>
+      <div class="admin-grid">
+        <section class="admin-card" aria-labelledby="entries-title">
+          <div class="card-head"><h2 id="entries-title">Profile</h2><button id="new-entry" type="button">+ New draft</button></div>
+          <ul id="entries"></ul>
+          <p id="empty">No drafts yet.</p>
+        </section>
+        <section class="admin-card" aria-labelledby="editor-title">
+          <h2 id="editor-title">Draft editor</h2>
+          <form id="editor">
+            <label><span id="title-label">Name</span><input name="title" required maxlength="120"></label>
+            <label id="role-field">Role <input name="role" maxlength="120" placeholder="Cybersecurity Student"></label>
+            <label id="github-field">GitHub URL <input name="github" type="url" maxlength="300" placeholder="https://github.com/your-username"></label>
+            <label id="platform-field" hidden>Platform<select name="platform"><option>Hack The Box</option><option>TryHackMe</option></select></label>
+            <label><span id="body-label">Bio</span><textarea name="body" rows="7"></textarea></label>
+            <label><span id="link-label">Profile URL</span><input name="url" type="url" placeholder="https://"></label>
+            <fieldset class="media-fields">
+              <legend>Media</legend>
+              <button id="add-media" type="button">+ Add media</button>
+              <input id="media-input" type="file" multiple hidden accept=".jpg,.jpeg,.png,.webp,.gif,.mp4,.webm,.pdf,.doc,.docx,.odt,.txt">
+              <p class="media-help">Images, MP4 or WebM videos, PDFs, and documents. Up to 50 MB per file.</p>
+              <ul id="media-list"></ul>
+            </fieldset>
+            <div class="editor-actions"><button class="primary" type="submit">Save draft</button><button class="primary" id="publish-entry" type="submit">Publish</button><button id="unpublish-entry" type="button" hidden>Unpublish</button><button id="delete-entry" type="button" hidden>Delete draft</button></div>
+            <p id="status" role="status"></p>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
