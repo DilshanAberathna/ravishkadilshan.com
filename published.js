@@ -3,7 +3,7 @@ function appendMedia(container, attachments = []) {
   const gallery = document.createElement('div');
   gallery.className = 'entry-media';
   for (const file of attachments) {
-    const url = '/media/' + encodeURIComponent(file.id);
+    const url = 'media/' + encodeURIComponent(file.id);
     let element;
     if (/\.(jpg|jpeg|png|webp|gif)$/.test(file.id)) {
       element = document.createElement('img');
@@ -53,7 +53,7 @@ function entryCard(entry) {
 }
 
 async function showPublishedContent() {
-  const response = await fetch('api/content', {cache: 'no-store'});
+  const response = await fetch('content.json', {cache: 'no-cache'});
   if (!response.ok) return;
   const entries = await response.json();
   const group = section => entries.filter(entry => entry.section === section);
@@ -88,7 +88,7 @@ async function showPublishedContent() {
     if (portrait) {
       const image = document.querySelector('#hero-portrait');
       image.addEventListener('load', () => {
-        if (!image.getAttribute('src').startsWith('/media/')) return;
+        if (!image.getAttribute('src').startsWith('media/')) return;
         image.alt = 'Portrait of ' + profile.title;
         image.hidden = false;
         setText('#portrait-caption', 'PORTRAIT');
@@ -99,7 +99,7 @@ async function showPublishedContent() {
         image.hidden = true;
         setText('#portrait-caption', 'PORTRAIT PLACEHOLDER');
       }, {once: true});
-      image.src = '/media/' + encodeURIComponent(portrait.id);
+      image.src = 'media/' + encodeURIComponent(portrait.id);
     }
     appendMedia(document.querySelector('.about-grid > div'), attachments.filter(file => file !== portrait && file !== resume));
     if (resume) {
@@ -107,7 +107,7 @@ async function showPublishedContent() {
       if (resumeSlot) {
         const link = document.createElement('a');
         link.className = 'text-link';
-        link.href = '/media/' + encodeURIComponent(resume.id);
+        link.href = 'media/' + encodeURIComponent(resume.id);
         link.download = resume.name;
         link.textContent = 'Résumé ↗';
         resumeSlot.replaceWith(link);

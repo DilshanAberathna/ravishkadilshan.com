@@ -1,0 +1,11 @@
+{
+  "name": "ravishkadilshan-com",
+  "private": true,
+  "description": "Static portfolio (GitHub Pages) with a separate admin panel (Vercel).",
+  "engines": { "node": "20.x" },
+  "scripts": {
+    "test": "node scripts/test.mjs",
+    "build": "./scripts/build.sh",
+    "build:admin": "node scripts/build-admin.mjs"
+  }
+}

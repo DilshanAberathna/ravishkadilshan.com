@@ -1,15 +1,25 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <script src="../theme.js?v=theme-label-fix"></script>
+  <script src="theme.js?v=theme-label-fix"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
   <title>RD. | Portfolio Admin</title>
-  <link rel="stylesheet" href="../style.css?v=preloader-2">
+  <link rel="stylesheet" href="style.css?v=preloader-2">
   <link rel="stylesheet" href="admin.css?v=github-field">
   <script src="admin.js?v=restructure-2" defer></script>
 </head>
-<body>
+<body class="locked">
+  <main id="login-panel" class="login-panel">
+    <form id="login" class="admin-card" autocomplete="on">
+      <p class="eyebrow">PORTFOLIO / ADMIN</p>
+      <h1>Sign in<span>.</span></h1>
+      <label>Password <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"></label>
+      <button class="primary" type="submit">Sign in</button>
+      <p id="login-status" role="status"></p>
+    </form>
+  </main>
   <div class="workspace">
     <aside>
       <a class="logo" href="./" aria-label="Admin home">RD<span>.</span></a>
@@ -27,14 +37,14 @@
         <a href="#contact">Contact</a>
         <a href="#sections">+ Add section</a>
       </nav>
-      <a class="portfolio-link" href="../">View portfolio ↗</a>
+      <a class="portfolio-link" href="https://ravishkadilshan.com/" rel="noopener">View portfolio ↗</a>
     </aside>
     <main>
-      <header class="admin-top"><span class="eyebrow">CONTENT WORKSPACE</span><div class="admin-top-actions"><span class="badge">LOCAL ADMIN</span><button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button></div></header>
+      <header class="admin-top"><span class="eyebrow">CONTENT WORKSPACE</span><div class="admin-top-actions"><span class="badge">SECURE ADMIN</span><button id="logout" type="button">Sign out</button><button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button></div></header>
       <div class="admin-heading">
         <p class="eyebrow">PORTFOLIO / ADMIN</p>
         <h1>Manage content<span>.</span></h1>
-        <p>Save drafts in this browser, then publish entries to your portfolio.</p>
+        <p>Save drafts in this browser, then publish entries. Publishing commits to the repository and the site redeploys in a minute or two.</p>
       </div>
       <div class="admin-grid">
         <section class="admin-card" aria-labelledby="entries-title">
@@ -55,7 +65,7 @@
               <legend>Media</legend>
               <button id="add-media" type="button">+ Add media</button>
               <input id="media-input" type="file" multiple hidden accept=".jpg,.jpeg,.png,.webp,.gif,.mp4,.webm,.pdf,.doc,.docx,.odt,.txt">
-              <p class="media-help">Images, MP4 or WebM videos, PDFs, and documents. Up to 50 MB per file.</p>
+              <p class="media-help">Images, MP4 or WebM videos, PDFs, and documents. Up to 4 MB per file. Attached files are committed to the public repository as soon as they upload.</p>
               <ul id="media-list"></ul>
             </fieldset>
             <div class="editor-actions"><button class="primary" type="submit">Save draft</button><button class="primary" id="publish-entry" type="submit">Publish</button><button id="unpublish-entry" type="button" hidden>Unpublish</button><button id="delete-entry" type="button" hidden>Delete draft</button></div>

@@ -23,6 +23,38 @@ let section = 'profile';
 let activeId = null;
 let published = [];
 const unpublish = document.querySelector('#unpublish-entry');
+const loginForm = document.querySelector('#login');
+const loginStatus = document.querySelector('#login-status');
+
+class SignedOut extends Error {}
+
+// Every request carries a custom header and relies on the HttpOnly session cookie; the server rejects anything else.
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: {'X-Requested-With': 'admin', ...options.headers},
+  });
+  if (response.status === 401) {
+    lock();
+    throw new SignedOut();
+  }
+  return response;
+}
+
+function lock() {
+  document.body.classList.add('locked');
+  document.querySelector('#password').focus();
+}
+
+async function loadPublished() {
+  const response = await api('/api/content');
+  if (!response.ok) throw new Error();
+  published = await response.json();
+  document.body.classList.remove('locked');
+  openSection();
+}
 
 const mediaInput = document.querySelector('#media-input');
 const mediaList = document.querySelector('#media-list');
@@ -65,7 +97,7 @@ mediaInput.addEventListener('change', async () => {
     for (const file of files) {
       if (revision !== editorRevision) break;
       try {
-        const response = await fetch('../api/media?name=' + encodeURIComponent(file.name), {
+        const response = await api('/api/media?name=' + encodeURIComponent(file.name), {
           method: 'POST',
           headers: {'Content-Type': 'application/octet-stream'},
           body: file,
@@ -81,7 +113,7 @@ mediaInput.addEventListener('change', async () => {
     uploading = false;
     if (revision === editorRevision) {
       renderMedia();
-      status.textContent = failed ? failed + ' file(s) failed to upload. Check the format and size.' : 'Media attached. Save or publish this entry.';
+      status.textContent = failed ? failed + ' file(s) failed to upload. Check the format and the 4 MB limit.' : 'Media attached. Save or publish this entry.';
     }
   }
 });
@@ -158,7 +190,7 @@ function sectionEntries() {
 }
 
 async function updatePublication(action, draft) {
-  const response = await fetch('../api/content', {
+  const response = await api('/api/content', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({action, draft}),
@@ -203,7 +235,7 @@ editor.addEventListener('submit', async event => {
           status.textContent = 'Published to your portfolio.';
         } else renderEntries();
       } catch {
-        if (activeId === draft.id) status.textContent = 'Draft saved. Publishing failed. Use the local portfolio server and an HTTP or HTTPS link.';
+        if (activeId === draft.id) status.textContent = 'Draft saved. Publishing failed. Check that links start with http or https, then try again.';
       } finally {
         button.disabled = false;
       }
@@ -239,11 +271,31 @@ unpublish.addEventListener('click', async () => {
   }
 });
 window.addEventListener('hashchange', openSection);
-fetch('../api/content', {cache: 'no-store'})
-  .then(response => {
-    if (!response.ok) throw new Error();
-    return response.json();
-  })
-  .then(content => { published = content; openSection(); })
-  .catch(() => { status.textContent = 'Publishing requires the local portfolio server.'; });
+loginForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  loginStatus.textContent = 'Signing in…';
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {'Content-Type': 'application/json', 'X-Requested-With': 'admin'},
+      body: JSON.stringify({password: loginForm.elements.namedItem('password').value}),
+    });
+    if (response.status === 429) throw new Error('Too many attempts. Try again later.');
+    if (!response.ok) throw new Error('Incorrect password.');
+    loginForm.reset();
+    loginStatus.textContent = '';
+    await loadPublished();
+  } catch (error) {
+    loginStatus.textContent = error.message || 'Could not sign in.';
+  }
+});
+document.querySelector('#logout').addEventListener('click', async () => {
+  try { await api('/api/logout', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'}); } catch {}
+  published = [];
+  lock();
+});
+loadPublished().catch(error => {
+  if (!(error instanceof SignedOut)) status.textContent = 'Could not load published content.';
+});
 openSection();
