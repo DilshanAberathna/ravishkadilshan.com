@@ -108,54 +108,82 @@ document.addEventListener('visibilitychange', () => {
  document.documentElement.classList.toggle('page-hidden', document.hidden);
 });
 
-// Draw a continuous line through the existing section gutters as the page scrolls.
+// Route the line through gutters and the empty space below selected sections.
 (() => {
  const line = document.querySelector('.scroll-line');
  const main = line.closest('main');
- const path = line.querySelector('path');
- const tip = line.querySelector('circle');
+ const track = line.querySelector('.scroll-line-track');
+ const trace = line.querySelector('.scroll-line-trace');
+ const tip = line.querySelector('.scroll-line-tip');
+ const turnSections = ['about', 'practice', 'writeups'].map(id => document.getElementById(id));
  let length = 0;
  let start = 0;
  let end = 0;
+ let progress = 0;
  let frame = 0;
+ let lastTime = 0;
+ let snap = true;
 
- function draw() {
+ function draw(time) {
   frame = 0;
-  if (!motionEnabled || !length) return;
+  if (!motionEnabled || !length) {
+   snap = true;
+   return;
+  }
   const mainTop = main.getBoundingClientRect().top + window.scrollY;
-  const viewportLead = window.innerHeight * .72;
+  const viewportLead = window.innerHeight * .84;
   const firstScroll = mainTop + start - viewportLead;
   const lastScroll = Math.min(
    mainTop + end - viewportLead,
    document.documentElement.scrollHeight - window.innerHeight
   );
-  const progress = Math.max(0, Math.min(1, (window.scrollY - firstScroll) / Math.max(1, lastScroll - firstScroll)));
-  path.style.strokeDashoffset = 1 - progress;
-  const point = path.getPointAtLength(progress * length);
-  tip.setAttribute('cx', point.x);
-  tip.setAttribute('cy', point.y);
+  const target = Math.max(0, Math.min(1, (window.scrollY - firstScroll) / Math.max(1, lastScroll - firstScroll)));
+  const difference = target - progress;
+  progress = snap || Math.abs(difference) < .0002
+   ? target
+   : progress + difference * (1 - Math.exp(-Math.max(16, time - lastTime) / 85));
+  snap = false;
+  lastTime = time;
+
+  trace.style.strokeDashoffset = 1 - progress;
+  const point = trace.getPointAtLength(progress * length);
+  tip.setAttribute('transform', `translate(${point.x} ${point.y})`);
   line.classList.toggle('is-drawn', progress > 0);
+  line.classList.toggle('is-drawing', progress > 0 && progress < 1);
+  if (progress !== target) scheduleDraw();
  }
 
  function measure() {
   const width = line.clientWidth;
   const height = main.clientHeight;
-  if (!width || !height) return;
-  const sections = [...main.querySelectorAll(':scope > section')];
-  const anchors = sections.map((section, index) => ({
-   x: width * (index % 2 ? .72 : .28),
-   y: section.offsetTop + section.offsetHeight * (index === 0 ? .72 : .52)
-  }));
-  start = anchors[0].y;
-  end = anchors.at(-1).y;
+  const gutter = parseFloat(getComputedStyle(turnSections[0]).paddingLeft);
+  const wide = width > 900;
+  const left = Math.min(gutter * .5, 32);
+  const right = wide ? width - left : gutter * .7;
+  start = document.getElementById('home').offsetHeight - 24;
+  end = height - 24;
   line.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  const curves = anchors.slice(1).map((point, index) => {
-   const previous = anchors[index];
-   const midpoint = (previous.y + point.y) / 2;
-   return `C ${previous.x} ${midpoint} ${point.x} ${midpoint} ${point.x} ${point.y}`;
-  });
-  path.setAttribute('d', `M ${anchors[0].x} ${start} ${curves.join(' ')}`);
-  length = path.getTotalLength();
+  let x = left;
+  const commands = [`M ${x} ${start}`];
+  for (const section of turnSections) {
+   const nextX = x === left ? right : left;
+   const y = section.offsetTop + section.offsetHeight - 24;
+   const radius = Math.min(22, Math.abs(nextX - x) / 2);
+   const direction = Math.sign(nextX - x);
+   commands.push(
+    `V ${y - radius}`,
+    `Q ${x} ${y} ${x + direction * radius} ${y}`,
+    `H ${nextX - direction * radius}`,
+    `Q ${nextX} ${y} ${nextX} ${y + radius}`
+   );
+   x = nextX;
+  }
+  commands.push(`V ${end}`);
+  const route = commands.join(' ');
+  track.setAttribute('d', route);
+  trace.setAttribute('d', route);
+  length = trace.getTotalLength();
+  snap = true;
   scheduleDraw();
  }
 
@@ -165,9 +193,10 @@ document.addEventListener('visibilitychange', () => {
 
  window.addEventListener('scroll', scheduleDraw, {passive: true});
  window.addEventListener('resize', measure);
- new MutationObserver(scheduleDraw).observe(document.documentElement, {
-  attributes: true, attributeFilter: ['data-motion']
- });
+ new MutationObserver(() => {
+  snap = true;
+  scheduleDraw();
+ }).observe(document.documentElement, {attributes: true, attributeFilter: ['data-motion']});
  if ('ResizeObserver' in window) new ResizeObserver(measure).observe(main);
  measure();
 })();
