@@ -22,7 +22,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.querySelector('.theme-toggle');
     applyTheme(root.dataset.theme);
-    toggle?.addEventListener('click', () => {
+    toggle?.addEventListener('click', event => {
       preference = preference === 'dark' ? 'light' : 'dark';
       const update = () => {
         applyTheme(preference);
@@ -31,7 +31,22 @@
       themeTransition?.skipTransition();
       if (root.dataset.motion === 'on' && document.startViewTransition
           && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        themeTransition = document.startViewTransition(update);
+        const bounds = toggle.getBoundingClientRect();
+        const x = event.detail ? event.clientX : bounds.left + bounds.width / 2;
+        const y = event.detail ? event.clientY : bounds.top + bounds.height / 2;
+        const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+        root.style.setProperty('--theme-origin', `${x}px ${y}px`);
+        root.style.setProperty('--theme-radius', `${radius}px`);
+        const transition = document.startViewTransition(update);
+        themeTransition = transition;
+        transition.finished.then(clearTransition, clearTransition);
+
+        function clearTransition() {
+          if (themeTransition !== transition) return;
+          themeTransition = undefined;
+          root.style.removeProperty('--theme-origin');
+          root.style.removeProperty('--theme-radius');
+        }
       } else {
         update();
       }

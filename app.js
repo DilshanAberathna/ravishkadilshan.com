@@ -278,6 +278,27 @@ document.addEventListener('visibilitychange', () => {
 
 // Keep the native pointer responsive while the decorative ring follows it.
 const finePointer = matchMedia('(any-hover: hover) and (any-pointer: fine)');
+
+// Track fine pointers over project artwork while leaving the card hit area fixed.
+document.querySelectorAll('.project-art').forEach(art => {
+ const reset = () => art.classList.remove('is-tracking');
+ art.addEventListener('pointermove', event => {
+  if (!motionEnabled || !finePointer.matches || event.pointerType !== 'mouse') return;
+  const rect = art.getBoundingClientRect();
+  const x = (event.clientX - rect.left) / rect.width;
+  const y = (event.clientY - rect.top) / rect.height;
+  art.style.setProperty('--glare-x', `${x * 100}%`);
+  art.style.setProperty('--glare-y', `${y * 100}%`);
+  art.style.setProperty('--tilt-x', `${(0.5 - y) * 12}deg`);
+  art.style.setProperty('--tilt-y', `${(x - 0.5) * 12}deg`);
+  art.classList.add('is-tracking');
+ });
+ art.addEventListener('pointerleave', reset);
+ art.addEventListener('pointercancel', reset);
+ motionButton.addEventListener('click', reset);
+ motionQuery.addEventListener('change', reset);
+ finePointer.addEventListener('change', reset);
+});
 const cursorRing = document.createElement('div');
 cursorRing.className = 'cursor-ring';
 cursorRing.setAttribute('aria-hidden', 'true');
