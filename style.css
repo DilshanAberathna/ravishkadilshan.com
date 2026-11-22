@@ -179,6 +179,37 @@ h2 span { color: #566d48; }
 .project[hidden] { display: none; }
 .project-art { display: grid; align-content: space-between; min-height: 170px; aspect-ratio: 2 / 1; overflow: hidden; padding: 18px; background: #252e25; color: var(--accent); font: 10px var(--mono); }
 .project-art svg { width: 100%; height: auto; max-height: 155px; }
+.project-art { position: relative; perspective: 600px; }
+.project-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at var(--glare-x, 50%) var(--glare-y, 50%), #ffffff29, transparent 65%);
+}
+[data-motion="on"] .project-art::after { transition: opacity .22s ease; }
+[data-motion="on"] .project-art.is-tracking::after { opacity: 1; }
+[data-motion="on"] .project-art svg { transition: transform .22s ease-out; }
+[data-motion="on"] .project-art.is-tracking svg {
+  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+}
+@supports (animation-timeline: view()) {
+  .project-art { view-timeline-name: --project-art; }
+  [data-motion="on"] .project-signal {
+    stroke-dasharray: 1;
+    animation: draw-project-signal linear both;
+    animation-timeline: --project-art;
+    animation-range: entry 0% entry 95%;
+  }
+  [data-motion="on"] .project-events {
+    animation: reveal-project-events linear both;
+    animation-timeline: --project-art;
+    animation-range: entry 15% entry 85%;
+  }
+}
+@keyframes draw-project-signal { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes reveal-project-events { from { opacity: .15; } to { opacity: 1; } }
 .evidence { background: #342b24; color: #e2c4a7; }
 .project-info, .writing-entry { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; padding: 23px; }
 .project-info .eyebrow, .writing-entry .eyebrow { color: var(--muted); }
@@ -362,12 +393,19 @@ html[data-motion="on"] { scroll-behavior: smooth; }
   .cursor-ring { display: none; }
 }
 
+html::view-transition-group(root),
 html::view-transition-old(root),
 html::view-transition-new(root) {
-  animation-duration: 260ms;
+  animation: none;
+  mix-blend-mode: normal;
 }
-
-html[data-motion="off"]::view-transition-old(root),
-html[data-motion="off"]::view-transition-new(root) {
-  animation-duration: 0s;
+html[data-motion="on"]::view-transition-new(root) {
+  animation: reveal-theme .68s cubic-bezier(.65, 0, .35, 1) both;
+}
+@keyframes reveal-theme {
+  from { clip-path: circle(0 at var(--theme-origin, 50% 50%)); }
+  to { clip-path: circle(var(--theme-radius, 150vmax) at var(--theme-origin, 50% 50%)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-motion="on"]::view-transition-new(root) { animation: none; }
 }
