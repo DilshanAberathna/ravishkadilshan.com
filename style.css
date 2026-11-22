@@ -102,6 +102,7 @@ figcaption { display: flex; justify-content: space-between; gap: 12px; color: #b
 }
 .scroll-line-tip { fill: currentColor; opacity: 0; }
 .scroll-line-ring { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.scroll-line.is-operated :is(.scroll-line-track, .scroll-line-trace) { mask: url(#scroll-lock-mask); }
 .scroll-line.is-drawn .scroll-line-trace,
 .scroll-line.is-drawing .scroll-line-tip { opacity: 1; }
 .scroll-line-node {
@@ -129,15 +130,38 @@ figcaption { display: flex; justify-content: space-between; gap: 12px; color: #b
 [data-theme="dark"] .lock-panel { color: var(--accent); }
 .lock-symbol { width: 120px; height: 160px; overflow: visible; }
 .lock-symbol path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
-[data-motion="on"] .lock-outline { visibility: hidden; }
+.lock-control {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+.lock-control span {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 7px 10px;
+  border: 1px solid currentColor;
+  background: var(--paper);
+  font: 12px var(--mono);
+}
+.lock-control:is(:hover, :focus-visible) span,
+.lock-panel.is-unlocked .lock-control span { background: var(--accent); color: #1c211b; }
+.lock-shackle { transform-box: fill-box; transform-origin: right bottom; }
+[data-motion="on"] .lock-shackle { transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+.lock-panel.is-unlocked .lock-shackle { transform: translateY(-7px) rotate(24deg); }
+.lock-panel.is-unlocked .lock-keyhole { fill: currentColor; }
+[data-motion="on"] .lock-panel:not(.is-operated) :is(.lock-outline, .lock-shackle) { visibility: hidden; }
 [data-motion="on"] .lock-keyhole { opacity: .22; transition: opacity .25s ease; }
-[data-motion="on"] .lock-panel.is-traced .lock-keyhole { opacity: 1; }
+[data-motion="on"] .lock-panel:is(.is-traced, .is-operated) .lock-keyhole { opacity: 1; }
 @media (max-width: 900px) {
   .scroll-line-ring { r: 5px; }
 }
 @media (prefers-reduced-motion: reduce) {
   [data-motion="on"] .scroll-line { visibility: hidden; }
-  [data-motion="on"] .lock-outline { visibility: visible; }
+  [data-motion="on"] .lock-panel:not(.is-operated) :is(.lock-outline, .lock-shackle) { visibility: visible; }
   [data-motion="on"] .lock-keyhole { opacity: 1; }
 }
 .section { padding: clamp(54px, 8vw, 112px) var(--gutter); border-bottom: 1px solid var(--line); }
