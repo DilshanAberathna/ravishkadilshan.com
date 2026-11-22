@@ -454,7 +454,12 @@ html { scroll-padding-top: calc(var(--header-height, 68px) + 16px); }
 [data-motion="on"] .hero-next:is(:hover, :focus-visible) span { transform: translateY(4px); }
 .hero h1 { overflow-wrap: anywhere; }
 
-.section { padding-block: clamp(64px, 9vw, 142px); }
+#main > .section {
+  min-height: calc(100vh - var(--header-height, 68px));
+  min-height: calc(100svh - var(--header-height, 68px));
+  padding-block: clamp(64px, 9vw, 142px);
+  align-content: center;
+}
 .section-top .eyebrow { display: inline-flex; align-items: center; gap: 10px; }
 .section-top .eyebrow::before { content: ""; width: 16px; height: 1px; background: currentColor; }
 .section-title { margin-bottom: clamp(26px, 4vw, 58px); }
@@ -463,7 +468,6 @@ html { scroll-padding-top: calc(var(--header-height, 68px) + 16px); }
   justify-items: center;
   align-content: center;
   text-align: center;
-  min-height: min(620px, 75svh);
 }
 .contact > p { max-width: 420px; }
 .contact .entry-media { justify-items: center; }
@@ -489,4 +493,45 @@ html { scroll-padding-top: calc(var(--header-height, 68px) + 16px); }
   .hero { padding-bottom: 24px; }
   .hero-next { margin-top: 22px; }
   .hero-meta { gap: 8px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) and (animation-range: entry 0% entry 80%) {
+    [data-motion="on"] #main > .section :is(
+      .section-top, .section-title, .about-grid h2, .about-intro, .focus h3,
+      .custom-section > h2, .contact > h2, .contact > p
+    ):not(:focus-within) {
+      animation: chapter-text-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 85%;
+    }
+
+    [data-motion="on"] #main > .section :is(
+      .project, .platform-card, .writing-entry, .portfolio-rows > div, .focus li, .contact > .primary
+    ):not(:focus-within) {
+      animation: chapter-card-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry var(--reveal-start, 0%) entry var(--reveal-end, 75%);
+    }
+
+    .project-grid > :nth-child(even) {
+      --reveal-start: 18%;
+      --reveal-end: 100%;
+    }
+
+    .portfolio-rows > :nth-child(even), .focus li:nth-child(even) {
+      --reveal-start: 10%;
+      --reveal-end: 90%;
+    }
+  }
+}
+
+@keyframes chapter-text-reveal {
+  from { opacity: .25; translate: 0 22px; clip-path: inset(0 0 45%); }
+  to { opacity: 1; translate: 0 0; clip-path: inset(0); }
+}
+
+@keyframes chapter-card-reveal {
+  from { opacity: .28; translate: 0 30px; scale: .98; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
 }

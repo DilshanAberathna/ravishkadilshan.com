@@ -117,20 +117,22 @@ if (preloader && motionEnabled && !location.hash) setTimeout(revealHero, 1200);
 else revealHero();
 
 if ('IntersectionObserver' in window) {
- const revealObserver = new IntersectionObserver(entries => {
-  const sectionDelays = new Map();
-  entries.forEach(entry => {
-   if (!entry.isIntersecting) return;
-   const section = entry.target.closest('.section');
-   const delay = sectionDelays.get(section) ?? 0;
-   if (entry.boundingClientRect.top >= 0 && !entry.target.matches(':focus-within')) {
-    animateElement(entry.target, riseIn, {delay, fill: 'backwards'});
-    sectionDelays.set(section, Math.min(delay + 60, 180));
-   }
-   revealObserver.unobserve(entry.target);
-  });
- }, {threshold: .08});
- document.querySelectorAll('.section-top, .section-title, .project, .writing-entry, .about-grid > div, .portfolio-rows > div, .platform-card, .contact > h2, .contact > p, .contact > .primary').forEach(element => revealObserver.observe(element));
+ if (!CSS.supports('animation-timeline: view()') || !CSS.supports('animation-range: entry 0% entry 80%')) {
+  const revealObserver = new IntersectionObserver(entries => {
+   const sectionDelays = new Map();
+   entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const section = entry.target.closest('.section');
+    const delay = sectionDelays.get(section) ?? 0;
+    if (entry.boundingClientRect.top >= 0 && !entry.target.matches(':focus-within')) {
+     animateElement(entry.target, riseIn, {delay, fill: 'backwards'});
+     sectionDelays.set(section, Math.min(delay + 60, 180));
+    }
+    revealObserver.unobserve(entry.target);
+   });
+  }, {threshold: .08});
+  document.querySelectorAll('.section-top, .section-title, .project, .writing-entry, .about-grid > div, .portfolio-rows > div, .platform-card, .contact > h2, .contact > p, .contact > .primary').forEach(element => revealObserver.observe(element));
+ }
  const activityObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => entry.target.classList.toggle('motion-visible', entry.isIntersecting));
  }, {rootMargin: '30px'});
