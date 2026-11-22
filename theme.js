@@ -17,20 +17,31 @@
     toggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
   }
 
+  let themeTransition;
   applyTheme(preference);
   document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.querySelector('.theme-toggle');
     applyTheme(root.dataset.theme);
     toggle?.addEventListener('click', () => {
-      const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
-      applyTheme(next);
-      try { localStorage.setItem(preferenceKey, next); } catch {}
+      preference = preference === 'dark' ? 'light' : 'dark';
+      const update = () => {
+        applyTheme(preference);
+        try { localStorage.setItem(preferenceKey, preference); } catch {}
+      };
+      themeTransition?.skipTransition();
+      if (root.dataset.motion === 'on' && document.startViewTransition
+          && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        themeTransition = document.startViewTransition(update);
+      } else {
+        update();
+      }
     });
   });
 
   window.addEventListener('storage', event => {
     if (event.key === preferenceKey || event.key === null) {
-      applyTheme(event.newValue === 'dark' ? 'dark' : 'light');
+      preference = event.newValue === 'dark' ? 'dark' : 'light';
+      applyTheme(preference);
     }
   });
 })();
