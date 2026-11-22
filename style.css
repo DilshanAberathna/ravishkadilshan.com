@@ -104,11 +104,41 @@ figcaption { display: flex; justify-content: space-between; gap: 12px; color: #b
 .scroll-line-ring { fill: none; stroke: currentColor; stroke-width: 1.5; }
 .scroll-line.is-drawn .scroll-line-trace,
 .scroll-line.is-drawing .scroll-line-tip { opacity: 1; }
+.scroll-line-node {
+  fill: var(--paper);
+  stroke: currentColor;
+  stroke-width: 1.5;
+  opacity: .45;
+}
+.scroll-line-node.is-reached { fill: currentColor; opacity: 1; }
+.lock-panel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 224px;
+  margin-top: 40px;
+  border: 1px solid var(--line);
+  color: #71874b;
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: center;
+  background-color: var(--paper);
+}
+[data-theme="dark"] .lock-panel { color: var(--accent); }
+.lock-symbol { width: 120px; height: 160px; overflow: visible; }
+.lock-symbol path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+[data-motion="on"] .lock-outline { visibility: hidden; }
+[data-motion="on"] .lock-keyhole { opacity: .22; transition: opacity .25s ease; }
+[data-motion="on"] .lock-panel.is-traced .lock-keyhole { opacity: 1; }
 @media (max-width: 900px) {
   .scroll-line-ring { r: 5px; }
 }
 @media (prefers-reduced-motion: reduce) {
   [data-motion="on"] .scroll-line { visibility: hidden; }
+  [data-motion="on"] .lock-outline { visibility: visible; }
+  [data-motion="on"] .lock-keyhole { opacity: 1; }
 }
 .section { padding: clamp(54px, 8vw, 112px) var(--gutter); border-bottom: 1px solid var(--line); }
 .section-top { margin-bottom: 20px; }

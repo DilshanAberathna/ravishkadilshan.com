@@ -115,7 +115,13 @@ document.addEventListener('visibilitychange', () => {
  const track = line.querySelector('.scroll-line-track');
  const trace = line.querySelector('.scroll-line-trace');
  const tip = line.querySelector('.scroll-line-tip');
- const turnSections = ['about', 'practice', 'writeups'].map(id => document.getElementById(id));
+ const nodes = line.querySelector('.scroll-line-nodes');
+ const panel = document.querySelector('.lock-panel');
+ const about = document.getElementById('about');
+ const turnSections = ['practice', 'writeups'].map(id => document.getElementById(id));
+ let checkpoints = [];
+ let markers = [];
+ let lockEnd = 0;
  let length = 0;
  let start = 0;
  let end = 0;
@@ -137,7 +143,23 @@ document.addEventListener('visibilitychange', () => {
    mainTop + end - viewportLead,
    document.documentElement.scrollHeight - window.innerHeight
   );
-  const target = Math.max(0, Math.min(1, (window.scrollY - firstScroll) / Math.max(1, lastScroll - firstScroll)));
+  const positions = [
+   {scroll: firstScroll, progress: 0},
+   ...checkpoints.map(checkpoint => ({
+    scroll: mainTop + checkpoint.y - window.innerHeight * checkpoint.viewport,
+    progress: checkpoint.distance / length
+   })),
+   {scroll: lastScroll, progress: 1}
+  ];
+  const nextIndex = positions.findIndex(position => window.scrollY <= position.scroll);
+  let target = 1;
+  if (nextIndex === 0) target = 0;
+  if (nextIndex > 0) {
+   const from = positions[nextIndex - 1];
+   const to = positions[nextIndex];
+   const fraction = (window.scrollY - from.scroll) / Math.max(1, to.scroll - from.scroll);
+   target = from.progress + fraction * (to.progress - from.progress);
+  }
   const difference = target - progress;
   progress = snap || Math.abs(difference) < .0002
    ? target
@@ -146,7 +168,10 @@ document.addEventListener('visibilitychange', () => {
   lastTime = time;
 
   trace.style.strokeDashoffset = 1 - progress;
-  const point = trace.getPointAtLength(progress * length);
+  const distance = progress * length;
+  const point = trace.getPointAtLength(distance);
+  panel.classList.toggle('is-traced', distance >= lockEnd);
+  for (const marker of markers) marker.node.classList.toggle('is-reached', distance >= marker.distance);
   tip.setAttribute('transform', `translate(${point.x} ${point.y})`);
   line.classList.toggle('is-drawn', progress > 0);
   line.classList.toggle('is-drawing', progress > 0 && progress < 1);
@@ -156,15 +181,44 @@ document.addEventListener('visibilitychange', () => {
  function measure() {
   const width = line.clientWidth;
   const height = main.clientHeight;
-  const gutter = parseFloat(getComputedStyle(turnSections[0]).paddingLeft);
+  const gutter = parseFloat(getComputedStyle(about).paddingLeft);
   const wide = width > 900;
   const left = Math.min(gutter * .5, 32);
   const right = wide ? width - left : gutter * .7;
   start = document.getElementById('home').offsetHeight - 24;
   end = height - 24;
   line.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  let x = left;
-  const commands = [`M ${x} ${start}`];
+  const bounds = panel.getBoundingClientRect();
+  const mainBounds = main.getBoundingClientRect();
+  const centerX = bounds.left - mainBounds.left + bounds.width / 2;
+  const centerY = bounds.top - mainBounds.top + bounds.height / 2;
+  const commands = [`M ${left} ${start}`, `V ${centerY + 51}`];
+  const distance = () => {
+   trace.setAttribute('d', commands.join(' '));
+   return trace.getTotalLength();
+  };
+  checkpoints = [{y: centerY - 69, viewport: .82, distance: distance()}];
+  // Enter at the bottom left, trace the body and shackle, then exit to the right.
+  commands.push(
+   `H ${centerX - 40}`,
+   `Q ${centerX - 48} ${centerY + 51} ${centerX - 48} ${centerY + 43}`,
+   `V ${centerY - 10}`,
+   `Q ${centerX - 48} ${centerY - 18} ${centerX - 40} ${centerY - 18}`,
+   `H ${centerX - 29}`, `V ${centerY - 38}`,
+   `A 29 29 0 0 1 ${centerX + 29} ${centerY - 38}`,
+   `V ${centerY - 18}`, `H ${centerX + 40}`,
+   `Q ${centerX + 48} ${centerY - 18} ${centerX + 48} ${centerY - 10}`,
+   `V ${centerY + 43}`,
+   `Q ${centerX + 48} ${centerY + 51} ${centerX + 40} ${centerY + 51}`,
+   `H ${centerX - 40}`
+  );
+  lockEnd = distance();
+  checkpoints.push({y: centerY + 51, viewport: .58, distance: lockEnd});
+  commands.push(`H ${centerX}`, `V ${centerY + 84}`);
+  let x = wide ? right : left;
+  commands.push(`H ${x}`);
+  nodes.replaceChildren();
+  markers = [];
   for (const section of turnSections) {
    const nextX = x === left ? right : left;
    const y = section.offsetTop + section.offsetHeight - 24;
@@ -177,6 +231,13 @@ document.addEventListener('visibilitychange', () => {
     `Q ${nextX} ${y} ${nextX} ${y + radius}`
    );
    x = nextX;
+   const node = document.createElementNS(line.namespaceURI, 'circle');
+   node.setAttribute('class', 'scroll-line-node');
+   node.setAttribute('cx', x);
+   node.setAttribute('cy', y + radius);
+   node.setAttribute('r', wide ? 4 : 2.5);
+   nodes.append(node);
+   markers.push({node, distance: distance()});
   }
   commands.push(`V ${end}`);
   const route = commands.join(' ');
