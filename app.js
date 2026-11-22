@@ -117,6 +117,16 @@ document.addEventListener('visibilitychange', () => {
  const tip = line.querySelector('.scroll-line-tip');
  const nodes = line.querySelector('.scroll-line-nodes');
  const panel = document.querySelector('.lock-panel');
+ const lockControl = panel.querySelector('.lock-control');
+ const lockLabel = lockControl.querySelector('span');
+ const shackleCutout = line.querySelector('.scroll-lock-cutout');
+ lockControl.hidden = false;
+ lockControl.addEventListener('click', () => {
+  panel.classList.add('is-operated');
+  line.classList.add('is-operated');
+  const unlocked = panel.classList.toggle('is-unlocked');
+  lockLabel.textContent = unlocked ? 'Lock padlock' : 'Unlock padlock';
+ });
  const about = document.getElementById('about');
  const turnSections = ['practice', 'writeups'].map(id => document.getElementById(id));
  let checkpoints = [];
@@ -192,6 +202,10 @@ document.addEventListener('visibilitychange', () => {
   const mainBounds = main.getBoundingClientRect();
   const centerX = bounds.left - mainBounds.left + bounds.width / 2;
   const centerY = bounds.top - mainBounds.top + bounds.height / 2;
+  shackleCutout.setAttribute('x', centerX - 31);
+  shackleCutout.setAttribute('y', centerY - 70);
+  shackleCutout.setAttribute('width', 62);
+  shackleCutout.setAttribute('height', 52);
   const commands = [`M ${left} ${start}`, `V ${centerY + 51}`];
   const distance = () => {
    trace.setAttribute('d', commands.join(' '));
