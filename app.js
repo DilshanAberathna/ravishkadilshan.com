@@ -1,15 +1,3 @@
-(() => {
-  const preloader = document.querySelector('#preloader');
-  if (!preloader) return;
-  function finish() {
-    preloader.classList.add('is-done');
-    document.body.classList.remove('is-preloading');
-    setTimeout(() => preloader.remove(), 600);
-  }
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
-  setTimeout(finish, 1200);
-})();
-
 const dialog = document.querySelector('#detail');
 const projects = [
  {title:'Network Traffic Analysis',category:'Networking / sample lab',copy:'A sample case-study layout for a security project. Your real project will explain the problem, your approach, the tools you used, and what you learned. This example does not represent completed work.',tags:['The challenge','Your process','Results & learning']},
@@ -70,18 +58,39 @@ motionButton.addEventListener('click', () => {
 });
 motionQuery.addEventListener('change', applyMotion);
 applyMotion();
-document.querySelectorAll('.hero-copy > *, .cyber-map').forEach((element, index) => {
- animateElement(element, [{opacity: 0, transform: 'translateY(22px)'}, {opacity: 1, transform: 'translateY(0)'}], {delay: index * 85, duration: 850});
-});
+const riseIn = [
+ {opacity: .25, translate: '0 16px'},
+ {opacity: 1, translate: '0 0'}
+];
+const preloader = document.querySelector('#preloader');
+function revealHero() {
+ if (preloader) {
+  preloader.classList.add('is-done');
+  document.body.classList.remove('is-preloading');
+  setTimeout(() => preloader.remove(), 600);
+ }
+ document.querySelectorAll('.hero-copy > *, .cyber-map').forEach((element, index) => {
+  animateElement(element, riseIn, {delay: index * 65, duration: 700, fill: 'backwards'});
+ });
+}
+if (preloader && motionEnabled && !location.hash) setTimeout(revealHero, 1200);
+else revealHero();
+
 if ('IntersectionObserver' in window) {
  const revealObserver = new IntersectionObserver(entries => {
+  const sectionDelays = new Map();
   entries.forEach(entry => {
    if (!entry.isIntersecting) return;
-   animateElement(entry.target, [{opacity: .15, transform: 'translateY(24px)'}, {opacity: 1, transform: 'translateY(0)'}]);
+   const section = entry.target.closest('.section');
+   const delay = sectionDelays.get(section) ?? 0;
+   if (entry.boundingClientRect.top >= 0 && !entry.target.matches(':focus-within')) {
+    animateElement(entry.target, riseIn, {delay, fill: 'backwards'});
+    sectionDelays.set(section, Math.min(delay + 60, 180));
+   }
    revealObserver.unobserve(entry.target);
   });
  }, {threshold: .08});
- document.querySelectorAll('.section-top, .section-title, .project, .writing-entry, .about-grid > div, .contact > h2, .contact > p').forEach(element => revealObserver.observe(element));
+ document.querySelectorAll('.section-top, .section-title, .project, .writing-entry, .about-grid > div, .portfolio-rows > div, .platform-card, .contact > h2, .contact > p, .contact > .primary').forEach(element => revealObserver.observe(element));
  const activityObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => entry.target.classList.toggle('motion-visible', entry.isIntersecting));
  }, {rootMargin: '30px'});

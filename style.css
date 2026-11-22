@@ -268,3 +268,13 @@ html[data-motion="on"] { scroll-behavior: smooth; }
   html[data-motion="on"] { scroll-behavior: auto; }
   .cursor-ring { display: none; }
 }
+
+html::view-transition-old(root),
+html::view-transition-new(root) {
+  animation-duration: 260ms;
+}
+
+html[data-motion="off"]::view-transition-old(root),
+html[data-motion="off"]::view-transition-new(root) {
+  animation-duration: 0s;
+}
