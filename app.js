@@ -28,6 +28,46 @@ nav.addEventListener('click', event => {
   menu.textContent = '☰';
 });
 
+// Keep native anchor navigation and indicate the section currently in view.
+(() => {
+ const header = document.querySelector('.site-header');
+ let currentLink = null;
+ let frame = 0;
+
+ function updateSection() {
+  frame = 0;
+  const threshold = header.getBoundingClientRect().bottom + 32;
+  const atBottom = scrollY > 0 && scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
+  let nextLink = null;
+  for (const link of nav.querySelectorAll('a[href^="#"]')) {
+   const section = document.getElementById(link.hash.slice(1));
+   if (section && (atBottom || section.getBoundingClientRect().top <= threshold)) nextLink = link;
+  }
+  if (currentLink === nextLink) return;
+  currentLink?.removeAttribute('aria-current');
+  nextLink?.setAttribute('aria-current', 'location');
+  currentLink = nextLink;
+ }
+
+ function scheduleUpdate() {
+  if (!frame) frame = requestAnimationFrame(updateSection);
+ }
+
+ function measureHeader() {
+  document.documentElement.style.setProperty('--header-height', `${header.offsetHeight}px`);
+  scheduleUpdate();
+ }
+
+ window.addEventListener('scroll', scheduleUpdate, {passive: true});
+ window.addEventListener('resize', measureHeader);
+ if ('ResizeObserver' in window) {
+  const layoutObserver = new ResizeObserver(measureHeader);
+  layoutObserver.observe(header);
+  layoutObserver.observe(document.querySelector('#main'));
+ }
+ measureHeader();
+})();
+
 // Motion is optional, follows OS preferences, and never hides page content.
 const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 const motionButton = document.querySelector('.motion-toggle');
@@ -69,7 +109,7 @@ function revealHero() {
   document.body.classList.remove('is-preloading');
   setTimeout(() => preloader.remove(), 600);
  }
- document.querySelectorAll('.hero-copy > *, .cyber-map').forEach((element, index) => {
+ document.querySelectorAll('.hero-copy > *, .cyber-map, .hero-next').forEach((element, index) => {
   animateElement(element, riseIn, {delay: index * 65, duration: 700, fill: 'backwards'});
  });
 }
@@ -128,7 +168,7 @@ document.addEventListener('visibilitychange', () => {
   lockLabel.textContent = unlocked ? 'Lock padlock' : 'Unlock padlock';
  });
  const about = document.getElementById('about');
- const turnSections = ['practice', 'writeups'].map(id => document.getElementById(id));
+ const turnSections = new Set(['practice', 'writeups']);
  let checkpoints = [];
  let markers = [];
  let lockEnd = 0;
@@ -233,25 +273,32 @@ document.addEventListener('visibilitychange', () => {
   commands.push(`H ${x}`);
   nodes.replaceChildren();
   markers = [];
-  for (const section of turnSections) {
-   const nextX = x === left ? right : left;
-   const y = section.offsetTop + section.offsetHeight - 24;
-   const radius = Math.min(22, Math.abs(nextX - x) / 2);
-   const direction = Math.sign(nextX - x);
-   commands.push(
-    `V ${y - radius}`,
-    `Q ${x} ${y} ${x + direction * radius} ${y}`,
-    `H ${nextX - direction * radius}`,
-    `Q ${nextX} ${y} ${nextX} ${y + radius}`
-   );
-   x = nextX;
+  for (const section of main.querySelectorAll(':scope > .section:not(#about)')) {
+   const markerY = section.offsetTop + Math.min(96, section.offsetHeight * .25);
+   commands.push(`V ${markerY}`);
    const node = document.createElementNS(line.namespaceURI, 'circle');
    node.setAttribute('class', 'scroll-line-node');
    node.setAttribute('cx', x);
-   node.setAttribute('cy', y + radius);
+   node.setAttribute('cy', markerY);
    node.setAttribute('r', wide ? 4 : 2.5);
    nodes.append(node);
-   markers.push({node, distance: distance()});
+   const markerDistance = distance();
+   markers.push({node, distance: markerDistance});
+   checkpoints.push({y: markerY, viewport: .66, distance: markerDistance});
+
+   if (turnSections.has(section.id)) {
+    const nextX = x === left ? right : left;
+    const y = section.offsetTop + section.offsetHeight - 24;
+    const radius = Math.min(22, Math.abs(nextX - x) / 2);
+    const direction = Math.sign(nextX - x);
+    commands.push(
+     `V ${y - radius}`,
+     `Q ${x} ${y} ${x + direction * radius} ${y}`,
+     `H ${nextX - direction * radius}`,
+     `Q ${nextX} ${y} ${nextX} ${y + radius}`
+    );
+    x = nextX;
+   }
   }
   commands.push(`V ${end}`);
   const route = commands.join(' ');
