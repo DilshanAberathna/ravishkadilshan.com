@@ -108,6 +108,70 @@ document.addEventListener('visibilitychange', () => {
  document.documentElement.classList.toggle('page-hidden', document.hidden);
 });
 
+// Draw a continuous line through the existing section gutters as the page scrolls.
+(() => {
+ const line = document.querySelector('.scroll-line');
+ const main = line.closest('main');
+ const path = line.querySelector('path');
+ const tip = line.querySelector('circle');
+ let length = 0;
+ let start = 0;
+ let end = 0;
+ let frame = 0;
+
+ function draw() {
+  frame = 0;
+  if (!motionEnabled || !length) return;
+  const mainTop = main.getBoundingClientRect().top + window.scrollY;
+  const viewportLead = window.innerHeight * .72;
+  const firstScroll = mainTop + start - viewportLead;
+  const lastScroll = Math.min(
+   mainTop + end - viewportLead,
+   document.documentElement.scrollHeight - window.innerHeight
+  );
+  const progress = Math.max(0, Math.min(1, (window.scrollY - firstScroll) / Math.max(1, lastScroll - firstScroll)));
+  path.style.strokeDashoffset = 1 - progress;
+  const point = path.getPointAtLength(progress * length);
+  tip.setAttribute('cx', point.x);
+  tip.setAttribute('cy', point.y);
+  line.classList.toggle('is-drawn', progress > 0);
+ }
+
+ function measure() {
+  const width = line.clientWidth;
+  const height = main.clientHeight;
+  if (!width || !height) return;
+  const sections = [...main.querySelectorAll(':scope > section')];
+  const anchors = sections.map((section, index) => ({
+   x: width * (index % 2 ? .72 : .28),
+   y: section.offsetTop + section.offsetHeight * (index === 0 ? .72 : .52)
+  }));
+  start = anchors[0].y;
+  end = anchors.at(-1).y;
+  line.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  const curves = anchors.slice(1).map((point, index) => {
+   const previous = anchors[index];
+   const midpoint = (previous.y + point.y) / 2;
+   return `C ${previous.x} ${midpoint} ${point.x} ${midpoint} ${point.x} ${point.y}`;
+  });
+  path.setAttribute('d', `M ${anchors[0].x} ${start} ${curves.join(' ')}`);
+  length = path.getTotalLength();
+  scheduleDraw();
+ }
+
+ function scheduleDraw() {
+  if (!frame && motionEnabled) frame = requestAnimationFrame(draw);
+ }
+
+ window.addEventListener('scroll', scheduleDraw, {passive: true});
+ window.addEventListener('resize', measure);
+ new MutationObserver(scheduleDraw).observe(document.documentElement, {
+  attributes: true, attributeFilter: ['data-motion']
+ });
+ if ('ResizeObserver' in window) new ResizeObserver(measure).observe(main);
+ measure();
+})();
+
 // Keep the native pointer responsive while the decorative ring follows it.
 const finePointer = matchMedia('(any-hover: hover) and (any-pointer: fine)');
 const cursorRing = document.createElement('div');
